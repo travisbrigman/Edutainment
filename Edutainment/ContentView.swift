@@ -66,12 +66,13 @@ struct ContentView: View {
                     
                 } else {
                     VStack {
-                        Text("\(gameQuestions[questionCount].equation )")
+                        Text("\(gameQuestions[questionCount].equation)")
                             .font(.largeTitle)
                         Text("Question: \(questionCount)")
                         Text("Score: \(gameScore)")
-                        TextField("Answer:", text: $enteredAnswer, onCommit: checkAnswer)
+                        TextField("Answer:", text: $enteredAnswer)
                             .keyboardType(.numberPad)
+                        Button("Submit Answer", action: checkAnswer)
                         Spacer()
                     }
                     .padding()
