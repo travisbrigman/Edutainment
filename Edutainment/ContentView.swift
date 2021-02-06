@@ -25,51 +25,87 @@ struct ContentView: View {
     
     var questionQuantity = ["5","10","15","20","All"]
     
+    //🚨🚨🚨Alert Message Stuff 🚨🚨🚨
+    @State private var errorTitle = ""
+    @State private var errorMessage = ""
+    @State private var showingError = false
+    
     var body: some View {
         Group{
-            if !isGameActive {
+            ZStack{
+                Color(.systemTeal).edgesIgnoringSafeArea(.all)
                 
-                Form {
-                    Stepper(value: $maxTables, in: 1...12, step: 1) {
-                        Text("Up to the \(maxTables)'s times tables")
-                    }
-                    Section(header: Text("How many questions do you want?")){
-                        Picker("Question Picker", selection: $quantitySelect) {
-                            ForEach(0 ..< questionQuantity.count) {
-                                Text("\(self.questionQuantity[$0])")
+                if !isGameActive {
+                    Form {
+                        Stepper(value: $maxTables, in: 1...12, step: 1) {
+                            Text("Up to the \(maxTables)'s times tables")
+                        }
+                        Section(header: Text("How many questions do you want?")){
+                            Picker("Question Picker", selection: $quantitySelect) {
+                                ForEach(0 ..< questionQuantity.count) {
+                                    Text("\(self.questionQuantity[$0])")
+                                }
                             }
+                            .pickerStyle(SegmentedPickerStyle())
+                            
+                            Button ( action:{
+                                self.isGameActive.toggle()
+                                self.startNewGame()
+                            }) {
+                                ZStack{
+                                    Image("greenButton")
+                                    Text("Start Game")
+                                        .foregroundColor(.white)
+                                }
+                                
+                            }
+                            
                         }
-                        .pickerStyle(SegmentedPickerStyle())
-                        
-                        Button("start game"){
-                            self.isGameActive.toggle()
-                            self.startNewGame()
-                        }
-
+                        .padding()
+                    }
+                    
+                } else {
+                    VStack {
+                        Text("\(gameQuestions[questionCount].equation )")
+                            .font(.largeTitle)
+                        Text("Question: \(questionCount)")
+                        Text("Score: \(gameScore)")
+                        TextField("Answer:", text: $enteredAnswer, onCommit: checkAnswer)
+                            .keyboardType(.numberPad)
+                        Spacer()
                     }
                     .padding()
-//                    .onAppear(perform: startNewGame)
-                }
-                
-            } else {
-                Text("\(gameQuestions[questionCount].equation )")
-                TextField("Answer", text: $enteredAnswer, onCommit: checkAnswer)
-                    .keyboardType(.numberPad)
-                Text("\(questionCount)")
-                Text("\(gameScore)")
-                
+                    
                 }
             }
+            .alert(isPresented: $showingError){
+                .init(title: Text(errorTitle), message: Text(errorMessage), dismissButton: .default(Text("OK")))
+            }
         }
-        
+    }
+    
     func checkAnswer() {
-        if questionCount < gameQuestions.count {
-            questionCount += 1
-            
-            if gameQuestions[questionCount].answer == Int(enteredAnswer) {
-                gameScore += 1
-            }
+        
+        if gameQuestions[questionCount].answer == Int(enteredAnswer) {
+            gameScore += 1
         }
+        loadNextQuestion()
+    }
+    func loadNextQuestion() {
+        if questionCount + 1 < gameQuestions.count {
+            questionCount += 1
+        } else {
+            showingError.toggle()
+            errorTitle = "you finished!"
+            errorMessage = "you got \(gameScore) out of \(gameQuestions.count) questions right!"
+            resetGame()
+        }
+    }
+    
+    func resetGame() {
+        questionCount = 0
+        gameScore = 0
+        isGameActive = false
     }
     
     //the number we are passing in here for maxQuestions is acutally a string typecast from the array questionQuantity. if a user selected "All", the app will probably crash.
@@ -78,7 +114,7 @@ struct ContentView: View {
         print(gameQuestions)
     }
 }
-    
+
 func questionBuilder(tableNumbers: Int, maxQuestions: Int) -> [Question] {
     var questionArray = [Question]()
     for number in 1...tableNumbers {
